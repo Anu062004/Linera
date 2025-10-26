@@ -1,0 +1,46 @@
+#!/bin/bash
+set -e
+
+CMD=$1
+
+case "$CMD" in
+  build)
+    echo "🧱 Building Hello Linera contract..."
+    cargo build --manifest-path contract/Cargo.toml --target wasm32-unknown-unknown --release
+    echo "⚡ Building Hello Linera frontend..."
+    npm run build --prefix frontend
+    echo "✅ Hello Linera build complete!"
+    ;;
+  deploy|publish)
+    echo "🚀 Deploying Hello Linera to Linera testnet..."
+    linera publish \
+      --application ./contract/target/wasm32-unknown-unknown/release/*.wasm \
+      --json > deploy-log.json
+    echo "✅ Hello Linera deployment complete. Log saved to deploy-log.json"
+    ;;
+  dev)
+    echo "🔧 Starting Hello Linera development mode..."
+    echo "Contract: cargo watch -x 'build --target wasm32-unknown-unknown'"
+    echo "Frontend: npm run dev --prefix frontend"
+    ;;
+  test)
+    echo "🧪 Running Hello Linera tests..."
+    cargo test --manifest-path contract/Cargo.toml
+    npm test --prefix frontend
+    ;;
+  *)
+    echo "Hello Linera App CLI"
+    echo "Usage: ./lnr {build|deploy|dev|test}"
+    echo ""
+    echo "Commands:"
+    echo "  build   - Build contract and frontend"
+    echo "  deploy  - Deploy to Linera testnet"
+    echo "  dev     - Start development mode"
+    echo "  test    - Run tests"
+    echo ""
+    echo "This is an example Linera application demonstrating:"
+    echo "  - Smart contract with counter functionality"
+    echo "  - React frontend with real-time updates"
+    echo "  - One-click deployment to Linera testnet"
+    ;;
+esac

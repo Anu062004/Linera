@@ -1,0 +1,123 @@
+#!/bin/bash
+set -e
+
+CMD=$1
+APP=$2
+
+case "$CMD" in
+  new)
+    if [ -z "$APP" ]; then
+      echo "❌ Error: Please provide an app name"
+      echo "Usage: ./lnr new <app-name>"
+      exit 1
+    fi
+    
+    if [ -d "$APP" ]; then
+      echo "❌ Error: Directory '$APP' already exists"
+      exit 1
+    fi
+    
+    TEMPLATE_PATH="$(dirname "$0")/../templates"
+    echo "🧩 Creating Linera app '$APP'..."
+    
+    mkdir -p "$APP"
+    cp -r "$TEMPLATE_PATH/contract-template" "$APP/contract"
+    cp -r "$TEMPLATE_PATH/frontend-template" "$APP/frontend"
+    cp -r "$TEMPLATE_PATH/operator-template" "$APP/operator"
+    
+    # Create a simple lnr script for the generated app
+    cat > "$APP/lnr" << 'EOF'
+#!/bin/bash
+set -e
+
+CMD=$1
+
+case "$CMD" in
+  build)
+    echo "🧱 Building contract..."
+    cargo build --manifest-path contract/Cargo.toml --target wasm32-unknown-unknown --release
+    echo "⚡ Building frontend..."
+    npm run build --prefix frontend
+    echo "✅ Build complete!"
+    ;;
+  deploy|publish)
+    echo "🚀 Deploying to Linera testnet..."
+    linera publish \
+      --application ./contract/target/wasm32-unknown-unknown/release/*.wasm \
+      --json > deploy-log.json
+    echo "✅ Deployment complete. Log saved to deploy-log.json"
+    ;;
+  dev)
+    echo "🔧 Starting development mode..."
+    echo "Contract: cargo watch -x 'build --target wasm32-unknown-unknown'"
+    echo "Frontend: npm run dev --prefix frontend"
+    ;;
+  test)
+    echo "🧪 Running tests..."
+    cargo test --manifest-path contract/Cargo.toml
+    npm test --prefix frontend
+    ;;
+  *)
+    echo "Linera App CLI"
+    echo "Usage: ./lnr {build|deploy|dev|test}"
+    echo ""
+    echo "Commands:"
+    echo "  build   - Build contract and frontend"
+    echo "  deploy  - Deploy to Linera testnet"
+    echo "  dev     - Start development mode"
+    echo "  test    - Run tests"
+    ;;
+esac
+EOF
+    
+    chmod +x "$APP/lnr"
+    
+    echo "✅ Linera app scaffold created at $APP/"
+    echo ""
+    echo "Next steps:"
+    echo "  cd $APP"
+    echo "  ./lnr build"
+    echo "  ./lnr deploy"
+    ;;
+  build)
+    echo "🧱 Building contract..."
+    cargo build --manifest-path contract/Cargo.toml --target wasm32-unknown-unknown --release
+    echo "⚡ Building frontend..."
+    npm run build --prefix frontend
+    echo "✅ Build complete!"
+    ;;
+  deploy|publish)
+    echo "🚀 Deploying to Linera testnet..."
+    linera publish \
+      --application ./contract/target/wasm32-unknown-unknown/release/*.wasm \
+      --json > deploy-log.json
+    echo "✅ Deployment complete. Log saved to deploy-log.json"
+    ;;
+  dev)
+    echo "🔧 Starting development mode..."
+    echo "Contract: cargo watch -x 'build --target wasm32-unknown-unknown'"
+    echo "Frontend: npm run dev --prefix frontend"
+    ;;
+  test)
+    echo "🧪 Running tests..."
+    cargo test --manifest-path contract/Cargo.toml
+    npm test --prefix frontend
+    ;;
+  *)
+    echo "🧩 Linera Scaffold Platform"
+    echo ""
+    echo "Usage: ./lnr {new|build|deploy|dev|test} [app-name]"
+    echo ""
+    echo "Commands:"
+    echo "  new <name>  - Create a new Linera app"
+    echo "  build       - Build contract and frontend"
+    echo "  deploy      - Deploy to Linera testnet"
+    echo "  dev         - Start development mode"
+    echo "  test        - Run tests"
+    echo ""
+    echo "Examples:"
+    echo "  ./lnr new my-app"
+    echo "  ./lnr build"
+    echo "  ./lnr deploy"
+    ;;
+esac

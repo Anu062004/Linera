@@ -1,0 +1,26 @@
+[toolchain]
+channel = "1.75.0"
+components = ["rustfmt", "clippy"]
+targets = ["wasm32-unknown-unknown"]
+
+[tool.cargo]
+# Enable deterministic builds
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[tool.clippy]
+# Enable all clippy lints
+all = true
+# Deny warnings
+deny = ["warnings"]
+
+[tool.rustfmt]
+# Consistent formatting
+edition = "2021"
+max_width = 100
+tab_spaces = 2
+newline_style = "Unix"
